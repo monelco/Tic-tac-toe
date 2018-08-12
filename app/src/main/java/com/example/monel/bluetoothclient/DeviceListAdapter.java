@@ -1,8 +1,7 @@
-package com.example.monel.bluetoothsample;
+package com.example.monel.bluetoothclient;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +11,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DeviceListAdapter extends BaseAdapter {
 

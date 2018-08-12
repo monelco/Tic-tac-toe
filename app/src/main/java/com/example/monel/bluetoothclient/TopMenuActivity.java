@@ -1,4 +1,4 @@
-package com.example.monel.bluetoothsample;
+package com.example.monel.bluetoothclient;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;

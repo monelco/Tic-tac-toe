@@ -1,4 +1,4 @@
-package com.example.monel.bluetoothsample;
+package com.example.monel.bluetoothclient;
 
 import org.junit.Test;
 

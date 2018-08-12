@@ -1,4 +1,4 @@
-package com.example.monel.bluetoothsample;
+package com.example.monel.bluetoothclient;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -16,10 +16,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.TabHost;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -111,6 +109,8 @@ public class SelectDeviceActivity extends AppCompatActivity {
 
         bindView();
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        Log.d(TAG,"DEBUG--:own name->" + mBluetoothAdapter.getName());
+        Log.d(TAG, "DEBUG--:own address->" + mBluetoothAdapter.getAddress());
         if (mBluetoothAdapter == null) {
             Log.d(TAG, "DEBUG--:Bluetooth is not supported");
             Toast.makeText(this, "Bluetooth非対応端末です。トップ画面に戻ります。", Toast.LENGTH_SHORT);
@@ -190,8 +190,8 @@ public class SelectDeviceActivity extends AppCompatActivity {
     }
 
     private void stopDiscovering() {
-        mHandlerThread.quit();
         mIsDiscovering = false;
+        mHandlerThread.quit();
     }
 
     private void displayNonPairedDeviceList() {
