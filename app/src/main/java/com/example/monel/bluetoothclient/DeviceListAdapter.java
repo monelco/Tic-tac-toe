@@ -7,34 +7,33 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 public class DeviceListAdapter extends BaseAdapter {
 
     private static final String TAG = "DeviceListAdapter";
 
-    private BluetoothDevice[] mBluetoothDeviceList;
-
     private LayoutInflater mInflater;
 
-    private ArrayList<String> mDeviceNameList;
+    private ArrayList<String> mDeviceNameList = new ArrayList<>();
 
-    private ArrayList<String> mDeviceAddressList;
+    private ArrayList<String> mDeviceAddressList = new ArrayList<>();
 
-    // 接続履歴のあるデバイスリスト用のコンストラクタ
-    DeviceListAdapter(Context context, ArrayList<String> deviceNameList,
-                      ArrayList<String> deviceAddressList) {
-        mDeviceNameList = deviceNameList;
-        mDeviceAddressList = deviceAddressList;
-        mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    }
+    private Set<BluetoothDevice> mBluetoothDevices;
 
-    DeviceListAdapter(Context context, LinkedHashMap<String, String> devices) {
-        mDeviceNameList = new ArrayList<>(devices.keySet());
-        mDeviceAddressList = new ArrayList<>(devices.values());
+    DeviceListAdapter(Context context, Set<BluetoothDevice> devices) {
+        mBluetoothDevices = devices;
+        for (BluetoothDevice device : devices) {
+            mDeviceAddressList.add(device.getAddress());
+            mDeviceNameList.add(device.getName());
+
+        }
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -46,7 +45,7 @@ public class DeviceListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         // TODO: レイアウト作成
-//        Log.d(TAG, "DEBUG--:getView.position->" + position);
+        Log.d(TAG, "DEBUG--:getView.position->" + position);
         ViewHolder viewHolder;
         if (convertView == null) {
 //            Log.d(TAG, "DEBUG--:convertView is null");
@@ -57,8 +56,7 @@ public class DeviceListAdapter extends BaseAdapter {
             viewHolder.mDeviceAddressView = convertView.findViewById(R.id.deviceAddress);
             // ここの処理の意味がよくわかっていないので調べる
             convertView.setTag(viewHolder);
-        }
-        else  {
+        } else {
 //            Log.d(TAG, "DEBUG--:convertView is not null");
             viewHolder = (ViewHolder) convertView.getTag();
         }
@@ -85,7 +83,20 @@ public class DeviceListAdapter extends BaseAdapter {
         return mDeviceNameList.size();
     }
 
-    private void add(String deviceAddress, String deviceName) {
+    public void add(BluetoothDevice bluetoothDevice) {
+        Log.d(TAG, "DEBUG--:add");
+        mDeviceNameList.clear();
+        mDeviceAddressList.clear();
+        mBluetoothDevices.add(bluetoothDevice);
+        for (BluetoothDevice device : mBluetoothDevices) {
+            mDeviceAddressList.add(device.getAddress());
+            mDeviceNameList.add(device.getName());
+        }
+    }
 
+    public void clear() {
+        mBluetoothDevices.clear();
+        mDeviceNameList.clear();
+        mDeviceAddressList.clear();
     }
 }

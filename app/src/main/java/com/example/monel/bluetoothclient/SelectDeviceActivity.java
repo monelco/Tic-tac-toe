@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +38,10 @@ public class SelectDeviceActivity extends AppCompatActivity {
 
     private ListView mFoundDeviceListView;
 
+    private DeviceListAdapter mPairedDeviceListAdapter;
+
+    private DeviceListAdapter mFoundDeviceListAdapter;
+
     private BluetoothAdapter mBluetoothAdapter;
 
     private final int DISCOVERY_INTERVAL = 15000;
@@ -45,15 +50,9 @@ public class SelectDeviceActivity extends AppCompatActivity {
 
     private boolean mIsDiscovering = false;
 
-    private DeviceListAdapter mPairedDeviceListAdapter;
 
-    private DeviceListAdapter mFoundDeviceListAdapter;
-
-    private Map<String, String> mPairedDevices = new LinkedHashMap<>();
-
-    private Map<String, String> mFoundDevices = new LinkedHashMap<>();
-
-
+    // 制限事項：iPhoneだとBluetoothの設定画面でないと、通知がこないぽい？？
+    // アプリ側の問題なのかどうかは後で調査しとかないと、、、
     private final BroadcastReceiver mDeviceFoundReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -62,19 +61,18 @@ public class SelectDeviceActivity extends AppCompatActivity {
             String action = intent.getAction();
             String deviceName = null;
             BluetoothDevice bluetoothDevice;
+            mFoundDeviceListView.setVisibility(View.VISIBLE);
             if (ACTION_DISCOVERY_STARTED.equals(action)) {
                 Log.d(TAG, "DEBUG--:onReceive->ACTION_DISCOVERY_STARTED");
             }
             if (ACTION_FOUND.equals(action)) {
                 Log.d(TAG, "DEBUG--:onReceive->ACTION_FOUND");
-                mFoundDeviceListView.setVisibility(View.VISIBLE);
                 bluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // 初めて検出されたデバイスの場合は、デバイス検出時にデバイス名が取得できていない場合があります。
                 // そのときのために、デバイス名が検出された時点でリストに登録するようにします
                 if ((deviceName = bluetoothDevice.getName()) != null) {
-//                    mFoundDeviceNameList.add(deviceName);
-//                    mFoundDeviceAddressList.add(bluetoothDevice.getAddress());
-                    mFoundDevices.put(bluetoothDevice.getAddress(), deviceName);
+                    mFoundDeviceListAdapter.add(bluetoothDevice);
+                    mFoundDeviceListAdapter.notifyDataSetChanged();
                     Log.d(TAG, "DEBUG--:onReceive->ACTION_FOUND.deviceName is not null");
                 }
             }
@@ -83,21 +81,14 @@ public class SelectDeviceActivity extends AppCompatActivity {
                 bluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (bluetoothDevice.getBondState() != BluetoothDevice.BOND_BONDED) {
                     // 接続したことのないデバイスのみリストに登録する
-//                    mFoundDeviceNameList.add(bluetoothDevice.getName());
                     Log.d(TAG, "DEBUG--:deviceName->" + bluetoothDevice.getName());
                     Log.d(TAG, "DEBUG--:deviceAddress->" + bluetoothDevice.getAddress());
-//                    mFoundDeviceAddressList.add(bluetoothDevice.getAddress());
-                    mFoundDevices.put(bluetoothDevice.getAddress(), bluetoothDevice.getName());
+                    mFoundDeviceListAdapter.add(bluetoothDevice);
                     mFoundDeviceListAdapter.notifyDataSetChanged();
                 }
             }
             if (ACTION_DISCOVERY_FINISHED.equals(action)) {
                 Log.d(TAG, "DEBUG--:onReceive->ACTION_DISCOVERY_FINISHED");
-//                deviceListAdapter = new DeviceListAdapter(getApplicationContext(), mFoundDeviceNameList, mFoundDeviceAddressList);
-////                mNonPairedDeviceListView.setAdapter(deviceListAdapter);
-//                deviceListAdapter.notifyDataSetChanged();
-                Log.d(TAG, "DEBUG--:mFoundDeviceListAdapter.notifyDataSetChanged");
-                mFoundDeviceListAdapter.notifyDataSetChanged();
             }
         }
     };
@@ -135,15 +126,14 @@ public class SelectDeviceActivity extends AppCompatActivity {
 
     private void bindView() {
         mPairedDeviceListView = findViewById(R.id.pairedDeviceList);
-        mPairedDeviceListAdapter = new DeviceListAdapter(getApplicationContext(), (LinkedHashMap) mPairedDevices);
-        mPairedDeviceListView.setAdapter(mPairedDeviceListAdapter);
-        mPairedDeviceListView.setVisibility(View.GONE);
+        mPairedDeviceListView.setVisibility(View.VISIBLE);
 
         mFoundDeviceListView = findViewById(R.id.nonPairedDeviceList);
-        mFoundDeviceListAdapter = new DeviceListAdapter(getApplicationContext(), (LinkedHashMap) mFoundDevices);
+        mFoundDeviceListAdapter = new DeviceListAdapter(getApplicationContext(), new HashSet<BluetoothDevice>());
         mFoundDeviceListView.setAdapter(mFoundDeviceListAdapter);
-        mFoundDeviceListView.setVisibility(View.GONE);
+        mFoundDeviceListView.setVisibility(View.VISIBLE);
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int ResultCode, Intent date){
@@ -164,18 +154,8 @@ public class SelectDeviceActivity extends AppCompatActivity {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         if (pairedDevices.size() > 0) {
-            mPairedDeviceListView.setVisibility(View.VISIBLE);
-//            ArrayList<String> deviceNameList = new ArrayList<>();
-//            ArrayList<String> deviceAddressList = new ArrayList<>();
-//            Map<String, String> devices = new LinkedHashMap<>();
-            for (BluetoothDevice device:pairedDevices) {
-//                deviceNameList.add(device.getName());
-//                deviceAddressList.add(device.getAddress());
-                mPairedDevices.put(device.getAddress(), device.getName());
-            }
-//            DeviceListAdapter deviceListAdapter = new DeviceListAdapter(getApplicationContext(),deviceNameList, deviceAddressList);
-//            DeviceListAdapter deviceListAdapter1 = new DeviceListAdapter(getApplicationContext(), (LinkedHashMap) mPairedDevices);
-            mPairedDeviceListAdapter.notifyDataSetChanged();
+            mPairedDeviceListAdapter = new DeviceListAdapter(getApplicationContext(), pairedDevices);
+            mPairedDeviceListView.setAdapter(mPairedDeviceListAdapter);
         }
         else {
             mPairedDeviceListView.setVisibility(View.GONE);
@@ -228,6 +208,13 @@ public class SelectDeviceActivity extends AppCompatActivity {
                         mBluetoothAdapter.startDiscovery();
 
                         Thread.sleep(DISCOVERY_INTERVAL);
+                        mFoundDeviceListAdapter.clear();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mFoundDeviceListAdapter.notifyDataSetChanged();
+                            }
+                        });
                     } catch (InterruptedException e) {
                         Log.d(TAG, "DEBUG--:InterruptedException is thrown");
                         e.printStackTrace();
